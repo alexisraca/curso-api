@@ -3,9 +3,17 @@
   
 }
 
-.buttons-wrapper, .resources-wrapper {
+.buttons-wrapper, .resources-wrapper, .search-wrapper {
   justify-content: center;
   display: flex;
+}
+
+.search-wrapper {
+  padding: 10px
+}
+
+.search-wrapper input {
+  width: 400px
 }
 
 .resources-wrapper {

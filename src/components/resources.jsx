@@ -7,6 +7,7 @@ export default class Resources extends Component {
 
     this.state = {
       resourcesList: this.props.resourcesList,
+      searching: this.props.searching,
       resource: null,
       resourceApiData: null
     }
@@ -27,7 +28,6 @@ export default class Resources extends Component {
 
   render() {
     let { resourcesList } = this.props;
-    console.log(resourcesList)
     return(
       <div className="resources-wrapper">
         <div className="resources-column">
@@ -41,7 +41,7 @@ export default class Resources extends Component {
         
 
         <div className="resource-viewport-column">
-          <code>{JSON.stringify(this.state.resourceApiData)}</code>
+          <code>{(this.state.resourceApiData && JSON.stringify(this.state.resourceApiData) || "Click arriba")}</code>
         </div>
       </div>
     )

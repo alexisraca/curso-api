@@ -9,7 +9,10 @@ class App extends Component {
   constructor() {
     super()
     this.state = {
-      resourcesList: []
+      resourcesList: [],
+      resourcesEnabled: false,
+      resourceType: "",
+      delaySearch: null
     }
   }
 
@@ -18,10 +21,29 @@ class App extends Component {
       axios.get(`https://swapi.co/api/${apiElement}`)
         .then((response) => {
           this.setState({
-            resourcesList: response.data.results
+            resourcesList: response.data.results,
+            resourceType: apiElement,
+            resourcesEnabled: true
           })
         })
     }
+  }
+
+  onSearch(event) {
+    this.state.timeout && clearTimeout(this.state.resourcesList)
+    const value = event.target.value
+    const searchString = value && `?search=${value}`
+    this.setState({
+      delaySearch:  setTimeout(() => {
+        axios.get(`https://swapi.co/api/${this.state.resourceType}${searchString}`)
+          .then((response) => {
+            this.setState({
+              resourcesList: response.data.results,
+              delaySearch: null
+            })
+          })
+      }, 2000)
+    })
   }
 
   render() {
@@ -30,11 +52,13 @@ class App extends Component {
         <div>
           <List onClickResource={this.buildResourcesRetrieveOnClick.bind(this)}/>
         </div>
+        <div className="search-wrapper">
         { 
-          this.state.resourcesList.length && <div>searchbar</div>
+          (this.state.resourcesEnabled || "") && <div><input onChange={this.onSearch.bind(this)}/></div>
         }
+        </div>
         <div className="resources-row">
-          <Resources resourcesList={this.state.resourcesList}/>
+          <Resources resourcesList={this.state.resourcesList} searching={this.state.delaySearch}/>
         </div>
       </div>
     );
