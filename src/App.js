@@ -4,15 +4,13 @@ import List from './components/list';
 import Resources from './components/resources';
 import './App.css';
 import axios from 'axios';
+import { connect } from 'react-redux'
 
 class App extends Component {
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = {
-      resourcesList: [],
-      resourcesEnabled: false,
-      resourceType: "",
-      delaySearch: null
+      delaySearch: null,
     }
   }
 
@@ -20,28 +18,30 @@ class App extends Component {
     return (event) => {
       axios.get(`https://swapi.co/api/${apiElement}`)
         .then((response) => {
-          this.setState({
-            resourcesList: response.data.results,
-            resourceType: apiElement,
-            resourcesEnabled: true
-          })
+          this.props.updateResourcesTypeAndData(
+            apiElement,
+            response.data.results,
+            true
+          )
         })
     }
   }
 
   onSearch(event) {
-    this.state.timeout && clearTimeout(this.state.resourcesList)
+    this.state.delaySearch && clearTimeout(this.state.delaySearch)
     const value = event.target.value
     const searchString = value && `?search=${value}`
     this.setState({
       delaySearch:  setTimeout(() => {
-        axios.get(`https://swapi.co/api/${this.state.resourceType}${searchString}`)
+        axios.get(`https://swapi.co/api/${this.props.resourcesType}${searchString}`)
           .then((response) => {
-            this.setState({
-              resourcesList: response.data.results,
-              delaySearch: null
-            })
+            this.props.updateResourcesTypeAndData(
+              this.props.resourcesType,
+              response.data.results,
+              this.props.resourcesEnabled
+            )
           })
+          .then((response) => { this.setState({ delaySearch: null }) })
       }, 2000)
     })
   }
@@ -52,17 +52,45 @@ class App extends Component {
         <div>
           <List onClickResource={this.buildResourcesRetrieveOnClick.bind(this)}/>
         </div>
-        <div className="search-wrapper">
         { 
-          (this.state.resourcesEnabled || "") && <div><input onChange={this.onSearch.bind(this)}/></div>
+          this.props.resourcesEnabled &&
+            <div className="resources-row">
+              <div className="search-wrapper">
+                <div>{ this.state.delaySearch && <label>Buscando...</label>}<input onChange={this.onSearch.bind(this)} /></div>
+              </div>
+              <Resources resourcesList={this.props.resourcesList} searching={this.state.delaySearch}/>
+            </div>
         }
-        </div>
-        <div className="resources-row">
-          <Resources resourcesList={this.state.resourcesList} searching={this.state.delaySearch}/>
-        </div>
       </div>
     );
   }
 }
 
-export default App;
+const mapStateToProps = (state, ownProps) => {
+  return {
+    resourcesList: state.resourcesList,
+    resourcesType: state.resourcesType,
+    resourcesEnabled: state.resourcesEnabled
+  }
+}
+
+const mapDispatchToProps = (dispatch, ownProps) => {
+  return {
+    updateResourcesTypeAndData: (type, data, resourcesEnabled) => {
+      dispatch({
+        type: 'LOAD_ELEMENTS',
+        resourcesType: type,
+        resourcesList: data,
+        resourcesEnabled: resourcesEnabled
+      })
+    }
+  }
+}
+
+const connectedApp = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App)
+
+
+export default connectedApp;
