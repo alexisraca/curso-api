@@ -5,6 +5,7 @@ import Resources from './components/resources';
 import './App.css';
 import axios from 'axios';
 import { connect } from 'react-redux'
+import SearchForm from './components/SearchForm';
 
 class App extends Component {
   constructor(props) {
@@ -27,9 +28,9 @@ class App extends Component {
     }
   }
 
-  onSearch(event) {
+  onSearch(formValues) {
     this.state.delaySearch && clearTimeout(this.state.delaySearch)
-    const value = event.target.value
+    const value = formValues.search
     const searchString = value && `?search=${value}`
     this.setState({
       delaySearch:  setTimeout(() => {
@@ -56,7 +57,10 @@ class App extends Component {
           this.props.resourcesEnabled &&
             <div className="resources-row">
               <div className="search-wrapper">
-                <div>{ this.state.delaySearch && <label>Buscando...</label>}<input onChange={this.onSearch.bind(this)} /></div>
+                <div>
+                  { this.state.delaySearch && <label>Buscando...</label>}
+                  <SearchForm onChange={this.onSearch.bind(this)} onSubmit={this.onSearch.bind(this)}></SearchForm>
+                </div>
               </div>
               <Resources resourcesList={this.props.resourcesList} searching={this.state.delaySearch}/>
             </div>
@@ -68,9 +72,9 @@ class App extends Component {
 
 const mapStateToProps = (state, ownProps) => {
   return {
-    resourcesList: state.resourcesList,
-    resourcesType: state.resourcesType,
-    resourcesEnabled: state.resourcesEnabled
+    resourcesList: state.otherStore.resourcesList,
+    resourcesType: state.otherStore.resourcesType,
+    resourcesEnabled: state.otherStore.resourcesEnabled
   }
 }
 

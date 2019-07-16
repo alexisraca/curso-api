@@ -7,7 +7,6 @@ let defaultState = {
 }
 
 export default (state = defaultState, action) => {
-  
   switch (action.type) {
     case 'LOAD_ELEMENTS':
       return Object.assign({}, state, {
