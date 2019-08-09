@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import logo from './logo.svg';
 import List from './components/list';
 import Resources from './components/resources';
@@ -6,68 +6,69 @@ import './App.css';
 import axios from 'axios';
 import { connect } from 'react-redux'
 import SearchForm from './components/SearchForm';
+import ResourceContext from './contexts/ResourceContext';
+import ResourceLabel from './components/ResourceLabel';
 
-class App extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      delaySearch: null,
-    }
-  }
+const App = (props) => {
 
-  buildResourcesRetrieveOnClick(apiElement) {
-    return (event) => {
-      axios.get(`https://swapi.co/api/${apiElement}`)
-        .then((response) => {
-          this.props.updateResourcesTypeAndData(
-            apiElement,
-            response.data.results,
-            true
-          )
-        })
-    }
-  }
+  const [delaySearch, setDelaySearch] = useState(null)
 
-  onSearch(formValues) {
-    this.state.delaySearch && clearTimeout(this.state.delaySearch)
-    const value = formValues.search
-    const searchString = value && `?search=${value}`
-    this.setState({
-      delaySearch:  setTimeout(() => {
-        axios.get(`https://swapi.co/api/${this.props.resourcesType}${searchString}`)
+  const buildResourcesRetrieveOnClick = (apiElement) => {
+    return (
+      (event) => {
+        axios.get(`https://swapi.co/api/${apiElement}`)
           .then((response) => {
-            this.props.updateResourcesTypeAndData(
-              this.props.resourcesType,
+            props.updateResourcesTypeAndData(
+              apiElement,
               response.data.results,
-              this.props.resourcesEnabled
+              true
             )
           })
-          .then((response) => { this.setState({ delaySearch: null }) })
+      }
+    )
+  }
+
+  const onSearch = async (formValues) => {
+    delaySearch && clearTimeout(delaySearch)
+    const value = formValues.search
+    const searchString = value && `?search=${value}`
+    setDelaySearch(() => {
+      setTimeout(() => {
+        axios.get(`https://swapi.co/api/${props.resourcesType}${searchString}`)
+          .then((response) => {
+            props.updateResourcesTypeAndData(
+              props.resourcesType,
+              response.data.results,
+              props.resourcesEnabled
+            )
+          })
+          .then((response) => { setDelaySearch(() => null) })
       }, 2000)
     })
   }
 
-  render() {
-    return (
-      <div className="App">
-        <div>
-          <List onClickResource={this.buildResourcesRetrieveOnClick.bind(this)}/>
-        </div>
-        { 
-          this.props.resourcesEnabled &&
-            <div className="resources-row">
-              <div className="search-wrapper">
-                <div>
-                  { this.state.delaySearch && <label>Buscando...</label>}
-                  <SearchForm onChange={this.onSearch.bind(this)} onSubmit={this.onSearch.bind(this)}></SearchForm>
-                </div>
-              </div>
-              <Resources resourcesList={this.props.resourcesList} searching={this.state.delaySearch}/>
-            </div>
-        }
+  return (
+    <div className="App">
+      <div>
+        <List onClickResource={buildResourcesRetrieveOnClick.bind(this)}/>
       </div>
-    );
-  }
+      { 
+        props.resourcesEnabled &&
+          <div className="resources-row">
+            <div className="search-wrapper">
+              <ResourceContext.Provider value={props.resourcesType}>
+                <ResourceLabel/>
+              </ResourceContext.Provider>
+              <div>
+                { delaySearch && <label>Buscando...</label>}
+                <SearchForm onChange={onSearch.bind(this)} onSubmit={onSearch.bind(this)}></SearchForm>
+              </div>
+            </div>
+            <Resources resourcesList={props.resourcesList} searching={delaySearch}/>
+          </div>
+      }
+    </div>
+  );
 }
 
 const mapStateToProps = (state, ownProps) => {

@@ -4,7 +4,6 @@ import React, { Component } from 'react';
 export default class List extends Component {
   render() {
     const { onClickResource } = this.props
-
     return(
       <div className="buttons-wrapper">
         <button className="api-button" onClick={onClickResource("planets")}>Planets</button>
